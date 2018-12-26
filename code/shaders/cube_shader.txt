@@ -1,0 +1,26 @@
+#version 330 
+
+	layout(location = 0) in vec4 position;
+	layout(location = 1) in vec4 color;
+
+	// 0 - draw color from layout, 1 - draw color from uniform
+	uniform int  u_state;	
+	uniform vec4 u_color;
+	uniform mat4 m_view;
+	uniform mat4 m_model;
+	uniform mat4 m_projection;
+	uniform vec3 u_velocity;
+	out vec4 the_color;
+	void main()
+	{
+		gl_Position = m_projection * m_view * m_model * position;
+		if(u_state == 0)
+		{
+			the_color = color;
+		}
+		if(u_state == 1)
+		{
+			the_color = u_color;
+		}
+
+	}

@@ -1,0 +1,22 @@
+#version 330 core
+in vec2 TexCoords;
+out vec4 color;
+
+uniform sampler2D text;
+uniform int  u_draw_outline;
+uniform vec4 u_text_color;
+uniform vec4 u_color;
+
+
+void main()
+{   
+	if(u_draw_outline == 1)
+	{
+		color = u_color;
+	}
+	else
+	{
+		vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, TexCoords).r);
+		color = vec4(u_text_color) * sampled;
+	}
+}  

@@ -1,0 +1,35 @@
+#version 330 core
+layout (location = 0) in vec3 vertex; 
+layout (location = 1) in vec2 uv; 
+
+out vec2 TexCoords;
+
+uniform mat4 m_model;
+uniform mat4 m_projection;
+uniform mat4 m_view;
+uniform int u_is_billboard;
+void main()
+{
+	if(u_is_billboard == 1)
+	{
+		mat4 m = m_view * m_model;
+		m[0][0] = 1;
+		m[0][1] = 0;
+		m[0][2] = 0;
+
+		m[1][0] = 0;
+		m[1][1] = 1;
+		m[1][2] = 0;
+
+		m[2][0] = 0;
+		m[2][1] = 0;
+		m[2][2] = 1;
+		gl_Position = m_projection * m *  vec4(vertex, 1.0);
+	}
+	else 
+	{
+    gl_Position = m_projection * m_view * m_model * vec4(vertex, 1.0);
+	}
+    TexCoords = uv;
+} 
+ 

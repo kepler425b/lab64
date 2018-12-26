@@ -1,0 +1,9 @@
+/*
+
+!.gitignore
+
+!*.cpp
+!*.h
+!*.txt
+!*.bat
+!shaders/

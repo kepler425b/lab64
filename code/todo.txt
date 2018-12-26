@@ -1,0 +1,51 @@
+beam_pointer nodes pointers points to different addresses than node array, which is what I expected it to do. 
+But how can it not be the legit node even if the address differs (seemingly), if that's the only case it could be found in memory? Unless a clone is created 
+and passed to the function instead of reference to it. Thats the only case it could work...
+
+Add error handling, especially in parsing jbeam files with no nodes/beam in it in which case opengl initializes structs with no data in them.
+
+Possibly try to make imgui draw any variable in a gives struct. Or display what is inside them for example transforms, position, rotation..
+
+Structure of object groups seems ok, but needs to add all beam types for parsing.
+
+After switching camera modes, delta should be set to zero and mouse warped to window center, it does, but if you move mouse fast enough after switching modes
+the mouse dt won't get reset to win center, and the ---- if (mouse_mode_switch && input_state.mouse.x == win.x && input_state.mouse.y == win.y) mouse_mode_switch = false; ----
+line wont turn on the switch which ignores mouse rotations later on.
+
+Clean up the codebase a bit.
+
+Something is wrong with meshparse functions or any other, probably buffer id's get mixed up.
+
+Shader uniform initting isn't good enough. You can init only once, because initting works only once.
+
+Linked list seems to be working ok. As I suspected eariler, after push_back vector invalidates all references to it's elements. 
+So the solution is to reserve a number of elements beforehand - vector.reserve(). I think reserving 100k nodes is ok.
+
+Adding new beams corrupts the pointers.
+
+Need to refactor the collision loops of jmodel meshes. Looks messy and feels like I could reuse col functions more cleverly.
+
+Two different buffers for nodes, and beams
+with pointers to nodes perhaps isn't the answer.
+What I could do is have a memory block filled with nodes and in each beam have a pointers to "a" and "b" nodes. That way I could at least 
+remove the nodes when deleting beams, BUT any other beam with pointers to the same nodes will get corrupted. 
+OK the problem isn't to delete the nodes and free the memory per se, but how to know what nodes to display.
+Since each beam can point to the same nodes AND will do, it gets hairy.
+
+Having duplicate nodes doesn't sound that great either.
+
+Mouse is fucked up. Also need to think of a way to organize code. Most functions uses custom defined types in other headers thus isolating 
+functionalities in separate headers and cpp files is tricky. Maybe I should build API with explicit type arguments, which limits to only using size types
+and etc? But that kind of misses the point of API? Hmm.
+
+z buffer need. Need to read on it.
+
+
+
+The purpose of the program.
+
+What it must be able to do:
+
+Reading .jbeam files, storing all the data in a way that allows node and beam deletions and insertion.
+
+

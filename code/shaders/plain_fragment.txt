@@ -1,0 +1,23 @@
+#version 330 
+
+	layout(location = 0) in vec4 position;
+	layout(location = 1) in vec4 color;
+
+	uniform int is_lines;
+	uniform vec4 uniform_color;
+	uniform mat4 m_view;
+	uniform mat4 m_model;
+	uniform mat4 m_projection;
+	out vec4 theColor;
+	void main()
+	{
+		gl_Position = m_projection * m_view * m_model * position;
+		if(is_lines == 1)
+		{
+			theColor = color;
+		}
+		else
+		{
+			theColor = uniform_color;
+		}
+	}

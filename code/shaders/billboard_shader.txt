@@ -1,0 +1,25 @@
+#version 330 core
+layout (location = 0) in vec3 vertex; 
+
+uniform mat4 m_model;
+uniform mat4 m_projection;
+uniform mat4 m_view;
+uniform vec4 u_color;
+out vec4 the_color;
+void main()
+{
+	mat4 m = m_view * m_model;
+	m[0][0] = 1;
+	m[0][1] = 0;
+	m[0][2] = 0;
+
+	m[1][0] = 0;
+	m[1][1] = 1;
+	m[1][2] = 0;
+
+	m[2][0] = 0;
+	m[2][1] = 0;
+	m[2][2] = 1;
+	gl_Position = m_projection * m *  vec4(vertex, 1.0);	
+	the_color = u_color; 
+} 

@@ -1,0 +1,15 @@
+# Ignore everything in this directory
+<<<<<<< HEAD
+/*
+# Except this file
+!.gitignore
+!README
+# Except folders
+
+!include/
+include/*
+!/include/kepler/
+!/code/
+!misc/
+!data/
+!4cl.bat

@@ -1,0 +1,38 @@
+#version 330 core
+layout (location = 0) in vec3 vertex; 
+layout (location = 1) in vec2 uv; 
+
+out vec2 TexCoords;
+
+uniform mat4 m_model;
+uniform mat4 m_projection;
+uniform mat4 m_view;
+
+void main()
+{
+	mat4 m = m_view * m_model;
+	
+	m[0][0] = 1;
+	m[0][1] = 0;
+	m[0][2] = 0;
+
+	m[1][0] = 0;
+	m[1][1] = 1;
+	m[1][2] = 0;
+
+	m[2][0] = 0;
+	m[2][1] = 0;
+	m[2][2] = 1;
+
+	/*
+	vec3 vpos = vec3(m_view[3][0], m_view[3][1], m_view[3][2]);
+	vec3 mpos = vec3(m[3][0], m[3][1], m[3][2]);
+	float d = distance(vpos, mpos);
+
+	m[3][0] *= d;
+	m[3][1] *= d;
+	m[3][2] *= d;
+	*/
+    gl_Position = m_projection * m * vec4(vertex, 1.0);
+    TexCoords = uv;
+}  

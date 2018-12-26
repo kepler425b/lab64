@@ -1,0 +1,25 @@
+#version 330
+
+	in vec4 the_color;
+	in vec4 frag_pos;
+	out vec4 outputColor;
+	in mat4 mvp;
+	void main()
+	{
+	//float x = (gl_FragCoord.x - wcw / 2.0f) / (wcw / 2.0f); 
+	//float y = (gl_FragCoord.y - wch / 2.0f) / (wch / 2.0f);
+
+	int wch = 1080/2;
+	int wcw = 1920/2;
+	vec4 fp = mvp * gl_FragCoord;
+	float len = sqrt(dot(gl_FragCoord, gl_FragCoord));
+
+
+	//vec2 cp = vec2(wcw + fp.x, wch + fp.y);
+	//float dis = sqrt((cp.x - fp.x) * (cp.x - fp.x) + (cp.y - fp.y) * (cp.y - fp.y));
+	float dis = sqrt(fp.x * fp.x + fp.y * fp.y);
+
+	if(dis > 128) discard;
+	outputColor = vec4(the_color);
+
+	}

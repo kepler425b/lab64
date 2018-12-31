@@ -37,6 +37,10 @@ struct EntityLogic {
 struct Entity {
 	ui32 id;
 	ui32 tag;
+	float average_penetration;
+	float penetration_sum;
+	ui32 num_of_iterations;
+	bool did_push_penetration;
 	Transform transform;
 	vector<component_mesh_renderer> mesh_components;
 	vector<component_mover> mover_components;
@@ -82,11 +86,20 @@ void update_sphere(Entity *e)
 void player_controller(Entity *e)
 {
 	Input *i = &input_state;
-	float scale = 5000.0f;
+	float dt = time_state.dt;
+#if 0
+	float scale = 4000.0f;
 	if(i->a_up) e->RB.added_force += vec3_up * scale; 
 	if(i->a_down) e->RB.added_force += -vec3_up * scale; 
 	if(i->a_right) e->RB.added_force += vec3_right * scale; 
 	if(i->a_left) e->RB.added_force += -vec3_right * scale; 
+#else
+	float scale = 0.15f;
+	if(i->a_up) e->transform.translate(vec3_up * scale); 
+	if(i->a_down) e->transform.translate(-vec3_up * scale);
+	if(i->a_right) e->transform.translate(vec3_right * scale);
+	if(i->a_left) e->transform.translate(-vec3_right * scale);
+#endif
 }
 
 void mouse_follower(Entity *e)
@@ -234,6 +247,7 @@ void RB_AddForce(RigidBody *rb, vec3 f)
 {
 	rb->added_force = f / rb->InvMass;
 }
+
 void RB_UpdatePhysics(Entity *e, Time &time_state)
 {
 	float dt = time_state.dt;
@@ -263,10 +277,33 @@ void RB_UpdatePhysics(Entity *e, Time &time_state)
 	added_force = {};
 }
 
-void RB_Update()
+void RB_UpdatePhysicsNoGravity(Entity *e, Time &time_state)
 {
+	float dt = time_state.dt;
+	vec3 force, added_force, acceleration, velocity;
+	float mass;
 	
+	float InvMass = e->RB.InvMass;
+	added_force = e->RB.added_force;
+	acceleration = e->RB.acceleration;
+	velocity = e->RB.velocity;
+	
+	
+	//vec3 an = added_force/mass * dt;
+	//vec3 fn = mass * an;
+	
+	e->RB.acceleration = 0.9f * (added_force) * InvMass * dt;
+	//acceleration += an;
+	
+	
+	e->RB.velocity += acceleration * dt;
+	vec3 result = velocity;
+	
+	e->transform.translate(result);
+	
+	added_force = {};
 }
+
 
 
 

@@ -100,7 +100,14 @@ bool AABBvsAABB(AABBColInfo *info)
 			if(x_overlap < y_overlap)
 			{
 				if(n.x < 0)
-					info->penetration = x_overlap;
+				{
+					info->n = vec3(1, 0, 0);
+				}
+				else
+				{
+					info->n = vec3(-1, 0, 0);
+				}
+				info->penetration = x_overlap;
 				info->points[0].x = fmax(amin.x, bmin.x);
 				info->points[0].y = fmax(amin.y, bmin.y);
 				info->points[1].x = fmin(amax.x, bmax.x);
@@ -140,40 +147,74 @@ bool TestAABBOverlap(AABBColInfo *info)
 	vec3 bmin = b->min;
 	vec3 bmax = b->min + b->max;
 	
-    float d1x = bmin.x - amax.x;
-    float d1y = bmin.y - amax.y;
-    float d2x = amin.x - bmax.x;
-    float d2y = amin.y - bmax.y;
+	float d1x = bmin.x - amax.x;
+	float d1y = bmin.y - amax.y;
+	float d2x = amin.x - bmax.x;
+	float d2y = amin.y - bmax.y;
 	
-    if (d1x > 0.0f || d1y > 0.0f)
-        return FALSE;
+	if (d1x > 0.0f || d1y > 0.0f)
+		return FALSE;
 	
-    if (d2x > 0.0f || d2y > 0.0f)
-        return FALSE;
+	if (d2x > 0.0f || d2y > 0.0f)
+		return FALSE;
 	
-    return TRUE;
+	return TRUE;
 }
 
-
+float last_penetration;
+float penetration;
 void CorrectPenetration(Entity *a, Entity *b)
 {
 	float k_slop = 0.005f;
-	float percent = 0.01f;
+	float percent = 0.035f;
+	float bias = 1.0f;
+	float scale;
+	vec3 correction;
 	AABBColInfo info;
 	info.a = &a->ColliderRect;
 	info.b = &b->ColliderRect;
 	if(AABBvsAABB(&info))
 	{
-		if(1)
+		penetration = info.penetration;
+		if(info.penetration * bias >= last_penetration)
 		{
-			vec3 correction = (fmax(info.penetration - k_slop, 0.0f) / (a->RB.InvMass + b->RB.InvMass)) * percent * info.n;
-			a->transform.translate(-correction * a->RB.InvMass);
-			b->transform.translate(correction * b->RB.InvMass);
-			imgpushv3f("correction", correction);
+			//cout << "info.penetration: " << info.penetration << endl;
+			logpushf("info.penetration", info.penetration);
+			scale = map_to_unit_range(info.penetration - last_penetration, 1.0f);
+			vec4 color = vec4(scale*3.0f, 0.25f, 0.5f, 1.0f);
+			a->ColliderRect.color = color;
+			b->ColliderRect.color = color;
+			scale += 1.0f;
+			//cout << "scale: " << scale << endl;
+			logpushf("scale", scale);
+			float difference = info.penetration - last_penetration;
+			//cout << "difference: " << difference << endl;
+			logpushf("difference", difference);
+			
+			
+			//vec3 correction = (fmax(info.penetration - k_slop, 0.0f)) * info.n;
+			
+			if(!a->did_push_penetration)
+			{
+				a->did_push_penetration = 1;
+				push_text(&render_group_text, to_string(scale), a->transform.position() + a->ColliderRect.max*0.5f + vec3(0, 0, 0.05f), 0.15f, vec4(1.0f));
+				float t = -fmax(penetration - k_slop, 0.0f) * 0.5f * percent * scale;
+				push_text(&render_group_text, to_string(t), a->transform.position() + a->ColliderRect.max*0.25f + vec3(0, 0, 0.05f), 0.15f, vec4(1.0f));
+			}
+			if(!b->did_push_penetration)
+			{
+				a->did_push_penetration = 1;
+				push_text(&render_group_text, to_string(scale), b->transform.position() + b->ColliderRect.max*0.5f + vec3(0, 0, 0.05f), 0.15f, vec4(1.0f));
+				float t = fmax(penetration - k_slop, 0.0f) * 0.5f * percent * scale;
+				push_text(&render_group_text, to_string(t), a->transform.position() + a->ColliderRect.max*0.25f + vec3(0, 0, 0.05f), 0.15f, vec4(1.0f));
+			}
 		}
+		correction = fmax(penetration - k_slop, 0.0f) * 0.5f * info.n;
+		a->transform.translate(-correction * percent * scale);
+		b->transform.translate(correction * percent * scale);
+		last_penetration = penetration;
 	}
 }
-
 void ResolveRectCollision(Entity *a, Entity *b)
 {
 	AABBColInfo info;
@@ -182,8 +223,6 @@ void ResolveRectCollision(Entity *a, Entity *b)
 	
 	if(AABBvsAABB(&info))
 	{
-		imgpushf("COLLIDES", 0);
-		
 		vec3 pa = a->transform.position();
 		vec3 pb = b->transform.position();
 		vec3 n = info.n;
@@ -208,30 +247,39 @@ void ResolveRectCollision(Entity *a, Entity *b)
 		
 		//draw_rect(&default_shader, vec3(info.points[0].x, info.points[0].y, 0.05f), info.points[1].x,
 		//info.points[1].y, vec3(1), 0, 1.0f, TRAN * 1.5f, &camera, 0);
-		
-		imgpushv3f("min", info.points[0]);
-		imgpushv3f("max", info.points[1]);
-		imgpushv3f("n", n);
 #if 1
 		vec3 RelativeVelocity = a->RB.velocity - b->RB.velocity;
+		//if(RelativeVelocity.x == 0.0f && RelativeVelocity.y == 0.0f && RelativeVelocity.z == 0.0f);
 		
+		//logpushv3f("RelativeVelocity", RelativeVelocity);
 		float Magnitude = dot(RelativeVelocity, n);
+		
+		//logpushf("Magnitude", Magnitude);
+		
 		float e = fmin(a->RB.e, b->RB.e);
 		
 		float j = -(1.0f + e) * Magnitude;
+		//logpushf("j", j);
 		//if(j == 0.0f) return;
 		j /= a->RB.InvMass + b->RB.InvMass;
 		
 		vec3 Impulse = j * n;
 		
-		logpushv3f("Impulse", Impulse);
+		//logpushv3f("Impulse", Impulse);
 		
 		a->RB.velocity += a->RB.InvMass * Impulse;
 		b->RB.velocity -= b->RB.InvMass * Impulse;
 		
+		//logpushv3f("A velocity", a->RB.velocity);
+		//logpushv3f("B velocity", b->RB.velocity);
+		
 		RelativeVelocity = a->RB.velocity - b->RB.velocity;
+		
 		vec3 t = (dot(RelativeVelocity, n) * n);
 		vec3 fn = RelativeVelocity - t;
+		
+		if(fn.x == 0.0f && fn.y == 0.0f && fn.z == 0.0f) return;
+		//logpushv3f("fn", fn);
 		
 		vec3 TangentVector = normalize(fn);
 		
@@ -241,7 +289,7 @@ void ResolveRectCollision(Entity *a, Entity *b)
 		fj /= a->RB.InvMass + b->RB.InvMass;
 		
 		vec3 FrictionImpulse = fj * fn;
-		imgpushv3f("fn", FrictionImpulse);
+		//imgpushv3f("fn", FrictionImpulse);
 		vec3 fp = a->ColliderRect.min + a->ColliderRect.max*0.5f;
 		fp.z += 0.05f;
 		float m = length(FrictionImpulse) / a->ColliderRect.max.x;
@@ -295,13 +343,12 @@ bool cast_ray(RigidBody_Sphere &target, Transform *transform, Ray_Info &info, ve
 	float b = dot(m, d);
 	float c = dot(m, m) - target.r * target.r;
 	debug_line(origin, origin + d * length, GREEN, &default_shader, &camera);
-	cout << "c: " << c << endl;
-	cout << "b: " << b << endl;
+	
 	if(c > 0.0f && b > 0.0f) return false;
 	
 	float discr = b*b - c;
 	
-	cout << "discr: " << discr << endl;
+	
 	if (discr < 0.0f) return false;
 	debug_line(origin, origin + d * discr, GREEN, &default_shader, &camera);
 	
@@ -309,7 +356,7 @@ bool cast_ray(RigidBody_Sphere &target, Transform *transform, Ray_Info &info, ve
 	
 	info.point = origin + t * d;
 	
-	cout << "RAY COLLISION" << endl;
+	
 	//info.contact_point = origin + (dn * ray_distance - t);
 	//info.direction = dn;
 	
@@ -320,10 +367,6 @@ bool cast_ray(RigidBody_Sphere &target, Transform *transform, Ray_Info &info, ve
 	{
 		t = 0.0f;
 		info.point = origin + t * d;
-		
-		cout << "RAY STARTED INSIDE SPHERE" << endl;
-		//info.contact_point = origin + (dn * ray_distance - t);
-		//info.direction = dn;
 		
 		debug_point(info.point, GREEN, 16, &default_shader);
 		debug_line(origin, d * t, RED + GREEN, &default_shader, &camera);

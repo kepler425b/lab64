@@ -1,4 +1,3 @@
-
 struct Collider_Rect {
 	vec3 min, max;
 	vec3 center;
@@ -54,6 +53,7 @@ struct RigidBody
 	float e = 0.8f;
     float mass = 1.0f;
 	float InvMass;
+	bool is_resting = 0;
 };
 
 struct RigidBody_Sphere

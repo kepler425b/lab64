@@ -29,6 +29,30 @@ float xoffset, yoffset;
 float hold_distance = 16.0f;
 float grab_force = 500.0f;
 
+void update_physics(Entity *e)
+{
+	RB_UpdatePhysics(e, time_state);
+	Entity *a;
+	Entity *b;
+	ui32 ITER_NUM = 1;
+	for(ui32 i = 0; i < ITER_NUM; i++)
+	{
+		for(ui32 i = 0; i < RectIDS.size(); i++)
+		{
+			a = get_entity(RectIDS[i]);
+			for(ui32 j = 0; j < RectIDS.size(); j++)
+			{
+				b = get_entity(RectIDS[j]);
+				if(a == b) continue;
+				ResolveRectCollision(a, b);
+				CorrectPenetration(a, b);
+			}
+			ResolveRigidBodyCollision(a);
+		}
+		//RB_UpdatePhysicsNoGravity(e, time_state);
+	}
+}
+
 void process_entities()
 {
 	for(ui32 eid = 0; eid < entities.size(); eid++)
@@ -61,7 +85,7 @@ void process_entities()
 			delete_entity(selected_entity->id);
 			selected_entity = 0;
 		}
-		push_text(&render_group_text, to_string(e->id), e->transform.position(), 0.5f, BLUE);
+		//push_text(&render_group_text, to_string(e->id), e->transform.position() + e->ColliderRect.max*0.75f + vec3(0, 0, 0.05f), 0.25f, vec4(1.0f));
 		
 		
 		
@@ -89,23 +113,9 @@ void process_entities()
 			}
 		}
 		
+		update_physics(e);
 		color =vec4(0.5f, abs(e->RB.velocity.x), abs(e->RB.velocity.z), 0.8f);
 		
-		RB_UpdatePhysics(e, time_state);
-		Entity *a;
-		Entity *b;
-		for(ui32 i = 0; i < RectIDS.size(); i++)
-		{
-			a = get_entity(RectIDS[i]);
-			for(ui32 j = 0; j < RectIDS.size(); j++)
-			{
-				b = get_entity(RectIDS[j]);
-				if(a == b) continue;
-				ResolveRectCollision(a, b);
-				CorrectPenetration(a, b);
-			}
-			ResolveRigidBodyCollision(a);
-		}
 		
 		if(e->tag == COMPONENT_COLLIDER_RECT)
 		{
@@ -113,8 +123,6 @@ void process_entities()
 					 e->ColliderRect.max.y, &e->transform, &default_shader, e->ColliderRect.color, &camera, 0);
 			
 			vec3 p = e->transform.position() - (vec3_up + vec3_right)*0.2f;
-			imgpushv3f(to_string(e->id) + " ID Entity pos:", e->transform.position());
-			imgpushv3f(to_string(e->id) + " ID ColliderRect pos:", e->ColliderRect.min);
 		}
 		
 		if(e->id != 2 && e->tag != COMPONENT_COLLIDER_RECT){
@@ -162,7 +170,7 @@ void process_entities()
 			vec3 ep = selected_entity->transform.position();
 			
 			float d = distance(cp, ep);
-			imgpushf("d", d);
+			
 			
 			/*
    if(input_state.k_x)
@@ -214,6 +222,11 @@ void process_entities()
   */
 	}
 	
+	for(ui32 i = 0; i < entities.size(); i++)
+	{
+		entities[i].did_push_penetration = 0;
+	}
+	
 	vec3 mouse_noz = input_state.mouse_w;
 	mouse_noz.z = 0.0f;
 	push_text(&render_group_text, "num of entities:" + to_string(entities.size()),  mouse_noz + vec3_up * 0.25f, 0.5f, GREEN);
@@ -225,12 +238,13 @@ void process_entities()
 	QueryPerformanceCounter(&tick_before_loop);
 	__int64 interval;
 	
-	render_text_group(render_group_text, text_info, &text_shader, &camera, 0);
 	render_line_group(render_list_lines, &default_shader, &camera);
 	render_cube_group(render_group_cubes, &default_shader, &camera);
 	render_point_group(points, &default_shader, &camera);
 	
 	draw_rect(&default_shader, vec3(-50, -2, -50), 100, 100, vec3_right, -80, 1, vec4(0.1f,0.1f,0.1f,1.0f), &camera, 1); 
+	render_text_group(render_group_text, text_info, &text_shader, &camera, 0);
+	
 	QueryPerformanceCounter(&tick_after_loop);
 	interval = tick_after_loop.QuadPart - tick_before_loop.QuadPart;
 	

@@ -145,3 +145,10 @@ vec4 rand_color(float min, float max, float amin)
 {
 	return vec4(rand_frange(min, max), rand_frange(min, max), rand_frange(min, max), rand_frange(amin, 1.0f));
 }
+
+void offset3vf(vec3 *in, float x, float y, float z)
+{
+	in->x += x;
+	in->y += y;
+	in->z += z;
+}

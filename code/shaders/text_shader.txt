@@ -12,6 +12,7 @@ void main()
 {
 	mat4 m = m_view * m_model;
 	
+/*
 	m[0][0] = 1;
 	m[0][1] = 0;
 	m[0][2] = 0;
@@ -23,7 +24,7 @@ void main()
 	m[2][0] = 0;
 	m[2][1] = 0;
 	m[2][2] = 1;
-
+*/
 	/*
 	vec3 vpos = vec3(m_view[3][0], m_view[3][1], m_view[3][2]);
 	vec3 mpos = vec3(m[3][0], m[3][1], m[3][2]);

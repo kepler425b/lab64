@@ -3,7 +3,7 @@
 #define GLEW_STATIC
 #define STB_TRUETYPE_IMPLEMENTATION
 #define NK_IMPLEMENTATION
-
+#define DUMP_LOG 0
 typedef unsigned short ui16;
 typedef unsigned int   ui32;
 typedef unsigned char  uc16;
@@ -555,7 +555,8 @@ int main(int argc, char* argv[])
 	sphere.sphere.InvMass = 1.0f / sphere.sphere.mass;
 	push_entity(sphere);
 #endif 
-	ui32 SIZE = 5;
+	
+	ui32 SIZE = 4;
 	for(ui32 i = 0; i < SIZE; i++)
 	{
 		for(ui32 j = 0; j < SIZE; j++)
@@ -564,11 +565,11 @@ int main(int argc, char* argv[])
 			vec4 color = rand_color(0.3f, 1.0f, 0.7f);
 			RectA.ColliderRect.color = color;
 			
-			RectA.RB.mass = 40.0f;
+			RectA.RB.mass = rand_frange(10.0f, 480.0f);
 			RectA.RB.InvMass = 1.0f / RectA.RB.mass;
 			vec3 dim = rand_ivec3(1, 8);
 			dim.z = 0;
-			vec3 p = vec3(i+dim.x*2, j*dim.y, 0);
+			vec3 p = vec3(j+dim.x, j+dim.y, 0);
 			p.z = 0.0f;
 			RectA.transform.set_position(p);
 			RectA.ColliderRect.center = p;
@@ -583,7 +584,7 @@ int main(int argc, char* argv[])
 	vec3 p = rand_vec3(0, 2);
 	p.z = 0.0f;
 	player.transform.set_position(p);
-	RectA.ColliderRect.color = rand_color(0.3f, 1.0f, 1.0f);
+	player.ColliderRect.color = rand_color(0.3f, 1.0f, 1.0f);
 	player.ColliderRect.center = p;
 	player.RB.mass = 40.0f;
 	player.RB.InvMass = 1.0f / player.RB.mass;
@@ -974,7 +975,12 @@ display_info.h = mode.h;*/
 		}
 		
 		logpushf("time", time_state.seconds_passed);
+#if DUMP_LOG
 		log_dump_list();
+#else
+		log_text_group.clear();
+		assert(log_text_group.size() == 0);
+#endif
 		//tomato.velocity = tomato.vl - tomato.vc;
 		//tomato.vl = tomato.vc;
 		
